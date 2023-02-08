@@ -1,14 +1,22 @@
 import React, { useState } from 'react';
-import Profile from './Profile';
-import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  GithubAuthProvider,
+  GoogleAuthProvider,
+  signInWithPopup,
+} from 'firebase/auth';
 
 const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [newAccount, setNewAccount] = useState(false);
+  const [newAccount, setNewAccount] = useState(true);
+  const [error, setError] = useState('');
 
-  //      firebase 연동
   const auth = getAuth();
+
+  // onChangeHandler
   const onChange = (event) => {
     const {
       target: { name, value },
@@ -21,29 +29,48 @@ const Auth = () => {
     }
   };
 
-  const onSubmit = (event) => {
+  // onSubmitHandler
+  const onSubmit = async (event) => {
     event.preventDefault();
 
-    // createUserWithEmailAndPassword(auth, email, password)
-    //   .then((userCredential) => {
-    //     const user = userCredential.user;
-    //     console.log(userCredential);
-    //     console.log('user', user);
-    //   })
-    //   .catch((error) => {
-    //     const errorCode = error.code;
-    //     const errorMessage = error.message;
-    //     console.log(errorCode);
-    //     console.log(errorMessage);
-    //     // ..
-    //   });
-
-    if (newAccount) {
-      // create account
-    } else {
-      // login
+    try {
+      let data;
+      if (newAccount) {
+        data = await createUserWithEmailAndPassword(auth, email, password);
+      } else {
+        data = await signInWithEmailAndPassword(auth, email, password);
+      }
+      console.log(data);
+    } catch (error) {
+      setError(error.message);
     }
   };
+
+  const toggleAccount = () => setNewAccount((prev) => !prev);
+
+  const onSocialClick = async (event) => {
+    const {
+      target: { name },
+    } = event;
+
+    let provider;
+    try {
+      if (name === 'google') {
+        provider = new GoogleAuthProvider();
+        const result = await signInWithPopup(auth, provider);
+        const credential = GoogleAuthProvider.credentialFromResult(result);
+        // const token = credential.accessToken;
+      } else if (name === 'github') {
+        provider = new GithubAuthProvider();
+        const result = await signInWithPopup(auth, provider);
+        const credential = GithubAuthProvider.credentialFromResult(result);
+        // const token = credential.accessToken;
+      }
+    } catch (error) {
+      setError(error.message);
+    }
+  };
+
   return (
     <div>
       <form onSubmit={onSubmit}>
@@ -67,10 +94,18 @@ const Auth = () => {
           type='submit'
           value={newAccount ? 'Create Account' : 'Log In'}
         ></input>
+        {error}
       </form>
+      <span onClick={toggleAccount}>
+        {newAccount ? 'sign in' : 'create account'}
+      </span>
       <div>
-        <button type='button'>Continue with Google</button>
-        <button type='button'>Continue with GitHub</button>
+        <button name='google' type='button' onClick={onSocialClick}>
+          Continue with Google
+        </button>
+        <button name='github' type='button' onClick={onSocialClick}>
+          Continue with GitHub
+        </button>
       </div>
     </div>
   );
