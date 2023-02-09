@@ -1,35 +1,62 @@
 import React, { useState, useEffect } from 'react';
 import { dbService } from 'MyBase';
-import { addDoc, collection, getDocs, query } from 'firebase/firestore';
+import {
+  addDoc,
+  collection,
+  getDocs,
+  query,
+  orderBy,
+  onSnapshot,
+} from 'firebase/firestore';
 
-const Home = () => {
+const Home = ({ userObj }) => {
   const [nweet, setNweet] = useState('');
   const [nweets, setNweets] = useState([]);
 
-  const getNweets = async () => {
-    const q = query(collection(dbService, 'nweets'));
-    console.log(q);
-    const querySnapshot = await getDocs(q);
-    querySnapshot.forEach((doc) => {
-      const nweetObj = {
-        ...doc.data(),
-        id: doc.id,
-      };
-      console.log(nweetObj);
-      setNweets((prev) => [nweetObj, ...prev]);
-    });
-  };
+  // 오래된 방식
+
+  // const getNweets = async () => {
+  //   // db 검색
+  //   const q = query(
+  //     collection(dbService, 'nweets'),
+  //     orderBy('createdAt', 'desc')
+  //   );
+
+  //   // docs 객체모음
+  //   const querySnapshot = await getDocs(q);
+
+  //   // 객체.forEach
+  //   querySnapshot.forEach((doc) => {
+  //     console.log('data', doc.data()); // data 객체 반환
+  //     const nweetObj = {
+  //       ...doc.data(),
+  //       id: doc.id, // id는 doc.data()에 반환되지 않기때문에 최상휘 doc에서 반환
+  //     };
+  //     setNweets((prev) => [nweetObj, ...prev]);
+  //   });
+  // };
 
   useEffect(() => {
-    getNweets();
+    const q = query(
+      collection(dbService, 'nweets'),
+      orderBy('createdAt', 'desc')
+    );
+    onSnapshot(q, (snapshot) => {
+      const nweetArr = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setNweets(nweetArr);
+    });
   }, []);
 
   const onSubmit = async (event) => {
     event.preventDefault();
     try {
       const docRef = await addDoc(collection(dbService, 'nweets'), {
-        nweet,
+        text: nweet,
         createdAt: Date.now(),
+        userId: userObj.uid,
       });
       console.log('Document written with ID: ', docRef.id);
     } catch (error) {

@@ -10,11 +10,15 @@ function App() {
   // 로그인 상태 유지
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
+  // 유저 정보
+  const [userObj, setUserObj] = useState(null);
+
   useEffect(() => {
     const auth = getAuth();
     onAuthStateChanged(auth, (user) => {
       if (user) {
         setIsLoggedIn(true);
+        setUserObj(user);
         const uid = user.uid;
       } else {
         setIsLoggedIn(false);
@@ -25,7 +29,11 @@ function App() {
 
   return (
     <>
-      {init ? <AppRouter isLoggedIn={isLoggedIn} /> : 'initializing....'}
+      {init ? (
+        <AppRouter userObj={userObj} isLoggedIn={isLoggedIn} />
+      ) : (
+        'initializing....'
+      )}
       <footer>&copy; {new Date().getFullYear()} Nwitter</footer>
     </>
   );
