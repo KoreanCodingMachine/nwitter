@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { dbService } from 'MyBase';
+import { dbService, storageService } from 'MyBase';
 import {
   addDoc,
   collection,
@@ -8,11 +8,14 @@ import {
   orderBy,
   onSnapshot,
 } from 'firebase/firestore';
+import { getDownloadURL, ref, uploadString } from '@firebase/storage';
 import Nweet from 'components/Nweet';
+import { v4 } from 'uuid';
 
 const Home = ({ userObj }) => {
   const [nweet, setNweet] = useState('');
   const [nweets, setNweets] = useState([]);
+  const [attachment, setAttachment] = useState('');
 
   // 오래된 방식
 
@@ -53,18 +56,30 @@ const Home = ({ userObj }) => {
 
   const onSubmit = async (event) => {
     event.preventDefault();
+    let attachmentUrl = '';
+
+    if (attachment !== '') {
+      const fileRef = ref(storageService, `${userObj.uid}/${v4()}`);
+      const response = await uploadString(fileRef, attachment, 'data_url');
+      attachmentUrl = await getDownloadURL(response.ref);
+    }
+
+    const nweetObj = {
+      text: nweet,
+      createdAt: Date.now(),
+      userId: userObj.uid,
+      attachmentUrl,
+    };
+
     try {
-      const docRef = await addDoc(collection(dbService, 'nweets'), {
-        text: nweet,
-        createdAt: Date.now(),
-        userId: userObj.uid,
-      });
+      const docRef = await addDoc(collection(dbService, 'nweets'), nweetObj);
       console.log('Document written with ID: ', docRef.id);
     } catch (error) {
       console.error('Error adding document: ', error);
     }
 
     setNweet('');
+    setAttachment('');
   };
 
   const onChange = (event) => {
@@ -72,6 +87,25 @@ const Home = ({ userObj }) => {
       target: { value },
     } = event;
     setNweet(value);
+  };
+
+  const onFileChange = (event) => {
+    const {
+      target: { files },
+    } = event;
+    const theFile = files[0];
+    const reader = new FileReader();
+    reader.onloadend = (finishedEvent) => {
+      const {
+        currentTarget: { result },
+      } = finishedEvent;
+      setAttachment(result);
+    };
+    reader.readAsDataURL(theFile);
+  };
+
+  const onClearAttachment = () => {
+    setAttachment('');
   };
 
   return (
@@ -84,7 +118,14 @@ const Home = ({ userObj }) => {
           onChange={onChange}
           value={nweet}
         />
+        <input type='file' accept='image/*' onChange={onFileChange} />
         <input type='submit' name='Nweet' />
+        {attachment && (
+          <div>
+            <img src={attachment} width='50px' height='50px' alt='이미지' />
+            <button onClick={onClearAttachment}>Cancel upload</button>
+          </div>
+        )}
       </form>
       <div>
         {nweets.length === 0
