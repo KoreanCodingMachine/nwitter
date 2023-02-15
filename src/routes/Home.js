@@ -3,11 +3,12 @@ import { dbService } from 'MyBase';
 import {
   addDoc,
   collection,
-  getDocs,
+  // getDocs,
   query,
   orderBy,
   onSnapshot,
 } from 'firebase/firestore';
+import Nweet from 'components/Nweet';
 
 const Home = ({ userObj }) => {
   const [nweet, setNweet] = useState('');
@@ -89,9 +90,11 @@ const Home = ({ userObj }) => {
         {nweets.length === 0
           ? 'loading...'
           : nweets.map((nweet) => (
-              <div key={nweet.id}>
-                <h4>{nweet.nweet}</h4>
-              </div>
+              <Nweet
+                nweetObj={nweet}
+                key={nweet.id}
+                isOwner={nweet.userId === userObj.uid}
+              />
             ))}
       </div>
     </div>

@@ -4,6 +4,7 @@ import Auth from '../routes/Auth';
 import Home from '../routes/Home';
 import Profile from 'routes/Profile';
 import Navigation from 'components/Navigation';
+import Antd from 'routes/Antd';
 
 const AppRouter = ({ isLoggedIn, userObj }) => {
   return (
@@ -16,7 +17,10 @@ const AppRouter = ({ isLoggedIn, userObj }) => {
             <Route path='/profile' element={<Profile />}></Route>
           </>
         ) : (
-          <Route path='/auth' element={<Auth />}></Route>
+          <>
+            <Route path='/auth' element={<Auth />}></Route>
+            <Route path='/antd' element={<Antd />}></Route>
+          </>
         )}
       </Routes>
     </Router>
