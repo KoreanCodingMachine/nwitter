@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import AppRouter from 'components/Router';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { auth } from 'MyBase';
+import { ref } from '@firebase/storage';
 
 function App() {
   // firebase 초기화
@@ -27,10 +28,24 @@ function App() {
     });
   }, []);
 
+  const refreshUser = () => {
+    const user = auth.currentUser;
+    // 객체에 담긴 정보가 많기 때문에 리액트에게 재런더링할 객체를 명확하게 명시해줘야함
+    setUserObj({
+      displayName: user.displayName,
+      uid: user.uid,
+      updateProfile: (args) => user.updateProfile(args),
+    });
+  };
+
   return (
     <>
       {init ? (
-        <AppRouter userObj={userObj} isLoggedIn={isLoggedIn} />
+        <AppRouter
+          refreshUser={refreshUser}
+          userObj={userObj}
+          isLoggedIn={isLoggedIn}
+        />
       ) : (
         'initializing....'
       )}
